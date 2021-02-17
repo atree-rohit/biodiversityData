@@ -17,6 +17,7 @@
 				</p>
 			</div>
 		</section>
+		@include("layouts.message")
 
 		<div id="app" class="has-text-centered pt-6">
 			<button class="button" @click="showModal = true">Add PDF File</button>
