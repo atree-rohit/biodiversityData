@@ -43,7 +43,23 @@ class PdfController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
+        // ini_set('memory_limit', '256M');
+        // ini_set('post_max_size', '256M');
+        // ini_set('upload_max_filesize', '256M');
+        // $this->validate($request, [
+        //     'file' => 'required|mimetypes:application/pdf|max:100000',
+        //     'description' => 'required'
+        // ]);
+        // $path = $request->file('file')->store('pdfs');
+        // $file = $request->file('file');
+
+        // $pdf = new Pdf();
+        // $pdf->file = $file->store('pdfs');
+        // $pdf->filename = $file->getClientOriginalName();
+        // $pdf->description = $request->description;
+
+        // $pdf->save();
+        return redirect()->back()->with('success', "PDF added successfully");
     }
 
     /**
