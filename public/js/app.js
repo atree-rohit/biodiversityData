@@ -1884,36 +1884,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 var default_layout = "default";
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "add-modal",
-  computed: {},
   data: function data() {
     return {
-      form: {
-        file: "",
-        description: ""
-      }
+      csrf: document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     };
-  },
-  methods: {
-    filesSelected: function filesSelected(event) {
-      // console.log(event.target.files[0]);
-      this.form.file = this.$refs.file.files[0];
-    },
-    submitForm: function submitForm() {
-      var formData = new FormData();
-      formData.append('file', this.form.file);
-      axios.post('/pdf', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      }).then(function () {
-        console.log('SUCCESS!!');
-      })["catch"](function () {
-        console.log('FAILURE!!');
-      });
-    }
   }
 });
 
@@ -19564,74 +19543,45 @@ var render = function() {
         })
       ]),
       _vm._v(" "),
-      _c("section", { staticClass: "modal-card-body has-text-left" }, [
-        _c("div", { staticClass: "file is-flex is-justify-content-center" }, [
-          _c("label", { staticClass: "file-label" }, [
-            _c("input", {
-              ref: "file",
-              staticClass: "file-input",
-              attrs: { type: "file", id: "file" },
-              on: { change: _vm.filesSelected }
-            }),
+      _c(
+        "form",
+        {
+          attrs: {
+            method: "POST",
+            action: "./pdf",
+            enctype: "multipart/form-data"
+          }
+        },
+        [
+          _c("input", {
+            attrs: { type: "hidden", name: "_token" },
+            domProps: { value: _vm.csrf }
+          }),
+          _vm._v(" "),
+          _vm._m(0),
+          _vm._v(" "),
+          _c("footer", { staticClass: "modal-card-foot" }, [
+            _c(
+              "button",
+              { staticClass: "button is-success", attrs: { type: "submit" } },
+              [_vm._v("Save changes")]
+            ),
             _vm._v(" "),
-            _vm._m(0)
-          ])
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "field mt-4" }, [
-          _c("div", { staticClass: "control" }, [
-            _c("textarea", {
-              directives: [
-                {
-                  name: "model",
-                  rawName: "v-model",
-                  value: _vm.form.description,
-                  expression: "form.description"
-                }
-              ],
-              staticClass: "textarea",
-              attrs: { placeholder: "Enter file description" },
-              domProps: { value: _vm.form.description },
-              on: {
-                input: function($event) {
-                  if ($event.target.composing) {
-                    return
+            _c(
+              "button",
+              {
+                staticClass: "button",
+                on: {
+                  click: function($event) {
+                    return _vm.$emit("close")
                   }
-                  _vm.$set(_vm.form, "description", $event.target.value)
                 }
-              }
-            })
+              },
+              [_vm._v("Cancel")]
+            )
           ])
-        ])
-      ]),
-      _vm._v(" "),
-      _c("footer", { staticClass: "modal-card-foot" }, [
-        _c(
-          "button",
-          {
-            staticClass: "button is-success",
-            on: {
-              click: function($event) {
-                return _vm.submitForm()
-              }
-            }
-          },
-          [_vm._v("Save changes")]
-        ),
-        _vm._v(" "),
-        _c(
-          "button",
-          {
-            staticClass: "button",
-            on: {
-              click: function($event) {
-                return _vm.$emit("close")
-              }
-            }
-          },
-          [_vm._v("Cancel")]
-        )
-      ])
+        ]
+      )
     ])
   ])
 }
@@ -19640,13 +19590,40 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("span", { staticClass: "file-cta" }, [
-      _c("span", { staticClass: "file-icon" }, [
-        _c("i", { staticClass: "fas fa-upload" })
+    return _c("section", { staticClass: "modal-card-body has-text-left" }, [
+      _c("div", { staticClass: "file is-flex is-justify-content-center" }, [
+        _c("label", { staticClass: "file-label" }, [
+          _c("input", {
+            staticClass: "file-input",
+            attrs: {
+              type: "file",
+              name: "file",
+              enctype: "multipart/form-data"
+            }
+          }),
+          _vm._v(" "),
+          _c("span", { staticClass: "file-cta" }, [
+            _c("span", { staticClass: "file-icon" }, [
+              _c("i", { staticClass: "fas fa-upload" })
+            ]),
+            _vm._v(" "),
+            _c("span", { staticClass: "file-label" }, [
+              _vm._v("\n\t\t\t\t\t\t\t\tSelect a PDF file…\n\t\t\t\t\t\t\t")
+            ])
+          ])
+        ])
       ]),
       _vm._v(" "),
-      _c("span", { staticClass: "file-label" }, [
-        _vm._v("\n\t\t\t\t\t\t\tSelect a PDF file…\n\t\t\t\t\t\t")
+      _c("div", { staticClass: "field mt-4" }, [
+        _c("div", { staticClass: "control" }, [
+          _c("textarea", {
+            staticClass: "textarea",
+            attrs: {
+              name: "description",
+              placeholder: "Enter file description"
+            }
+          })
+        ])
       ])
     ])
   }
