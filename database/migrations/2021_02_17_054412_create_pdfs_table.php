@@ -15,6 +15,7 @@ class CreatePdfsTable extends Migration
     {
         Schema::create('pdfs', function (Blueprint $table) {
             $table->id();
+            $table->string("file")->required();
             $table->string("filename")->required();
             $table->text("description");
             $table->boolean("parsed")->default(false);
