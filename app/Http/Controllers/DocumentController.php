@@ -27,7 +27,7 @@ class DocumentController extends Controller
 
         // $fields = [1,2,3];
 
-        return view("documents.index", compact("documents", "fields", "headers"));        
+        return view("documents.index", compact("documents", "fields", "headers"));
     }
 
     /**
@@ -72,13 +72,21 @@ class DocumentController extends Controller
      */
     public function show(Document $document)
     {
-        $file = $document->file;
-            
-        $raw_contents =  Pdf::getText(storage_path("app/".$file));
-        
-        $contents = explode("\n", $raw_contents);
+        $per_page = 1000;
+        $page = $_GET["page"] ?? 0;
+        $page *= $per_page;
 
-        $contents = array_slice($contents, 0, 100);
+        $file = $document->file;
+
+        $raw_contents =  Pdf::getText(storage_path("app/".$file));
+
+        $contents = explode("\n", $raw_contents);
+        if ($page >= count($contents)) {
+            echo "<div style='text-align:center; font-size:2em;'><h1>Out of range, page number is too high</h1>";
+            dd();
+        }
+
+        $contents = array_slice($contents, $page, $per_page);
         // dd($contents);
 
         return view("documents.show", compact("contents"));
