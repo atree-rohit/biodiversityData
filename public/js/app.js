@@ -2010,6 +2010,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "cleaning-row",
   props: ["d", "row_id", "showButtons", "editData"],
@@ -20330,8 +20331,15 @@ var render = function() {
   return _c("div", { staticClass: "columns", class: _vm.row_color }, [
     _c(
       "div",
-      { staticClass: "column is-two-thirds pt-1 pb-4", class: _vm.text_color },
+      {
+        staticClass: "column is-three-quarters pt-1 pb-4",
+        class: _vm.text_color
+      },
       [
+        _c("span", { staticClass: "py-1 px-2" }, [
+          _vm._v(_vm._s(_vm.row_id) + ".) ")
+        ]),
+        _vm._v(" "),
         _vm.editData
           ? _c("textarea", {
               directives: [

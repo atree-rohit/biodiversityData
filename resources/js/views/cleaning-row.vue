@@ -8,7 +8,8 @@
 </style>
 <template>
 	<div class="columns" :class="row_color">
-		<div class="column is-two-thirds pt-1 pb-4" :class="text_color">
+		<div class="column is-three-quarters pt-1 pb-4" :class="text_color">
+			<span class="py-1 px-2">{{ row_id }}.) </span>
 			<textarea class="textarea" v-if="editData" rows="2" v-model="data"></textarea>
 			<div v-else class="box p-1 is-vcentered">{{ data }}</div>
 		</div>
