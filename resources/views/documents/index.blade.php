@@ -61,7 +61,7 @@
 		</div>
 
 		<div id="app" class="has-text-centered pt-6">
-			<vtable :fields="@json($fields)"></vtable>
+			<documents-table :fields='@json($fields)' :data='@json($documents)'></documents-table>
 		</div>
 
 	</div>
