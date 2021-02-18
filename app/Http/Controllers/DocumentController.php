@@ -18,13 +18,16 @@ class DocumentController extends Controller
     {
         $documents = Document::all();
         $fields = [
-            ["id", "ID"],
-            ["filename", "Filename"],
-            ["description", "Description"],
-            ["parsed", "Parsed?"]
+            ['id', 'ID'],
+            ['filename', 'Filename'],
+            ['description', 'Description'],
+            ['parsed', 'Parsed?']
         ];
+        $headers = ['ID', 'Filename', 'Description', 'Parsed?'];
 
-        return view("documents.index", compact("documents", "fields"));
+        // $fields = [1,2,3];
+
+        return view("documents.index", compact("documents", "fields", "headers"));        
     }
 
     /**
@@ -71,9 +74,14 @@ class DocumentController extends Controller
     {
         $file = $document->file;
             
-        $contents =  Pdf::getText(storage_path("app/".$file));
+        $raw_contents =  Pdf::getText(storage_path("app/".$file));
         
-        dd($contents);
+        $contents = explode("\n", $raw_contents);
+
+        $contents = array_slice($contents, 0, 100);
+        // dd($contents);
+
+        return view("documents.show", compact("contents"));
     }
 
     /**
