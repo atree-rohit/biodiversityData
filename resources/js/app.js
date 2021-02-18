@@ -3,13 +3,13 @@ require('./bootstrap.js');
 import Vue from 'vue'
 
 //Main pages
-import App from './views/app'
-import AddModal from './views/add_pdf_modal.vue'
+import CleaningBoard from './views/cleaning-board'
+import DocumentsTable from './views/documents-table.vue'
 
 
 const app = new Vue({
     el: '#app',
-    components: {App, AddModal},
+    components: {CleaningBoard, DocumentsTable},
     data: {
     	showModal:true
     },
