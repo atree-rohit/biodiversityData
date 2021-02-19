@@ -8,4 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class LimboData extends Model
 {
     use HasFactory;
+
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
+    }
+
+    public function taxa()
+    {
+        return $this->hasMany(Taxa::class);
+    }
+
+    public function species()
+    {
+        return $this->hasMany(Species::class);
+    }
 }
