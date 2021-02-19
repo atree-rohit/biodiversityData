@@ -1,16 +1,22 @@
+<style>
+	.badge:hover{
+		cursor: pointer;
+		box-shadow: 1px 1px 5px #000;
+	}
+</style>
 <template>
-	<table class="table is-fullwidth">
+	<table class="table pt-2 border border-primary">
 		<thead>
 			<tr>
-				<th class="is-info" v-for="f in fields">{{ f[1] }}</th>
+				<th class="bg-primary text-light" v-for="f in fields">{{ f[1] }}</th>
 			</tr>
 		</thead>
-		<tbody class="">
+		<tbody class="text-center">
 			<tr v-for="d in data">
 				<td>{{ d.id }}</td>
-				<td>{{ d.filename }}</td>
-				<td>{{ d.description }}</td>
-				<td v-if="!d.parsed"><a class="button is-small is-success" @click="parseDoc(d.id)">Parse document</a></td>
+				<td class="text-start">{{ d.filename }}</td>
+				<td class="text-start">{{ d.description }}</td>
+				<td v-if="!d.parsed"><span class="badge rounded-pill bg-success" @click="parseDoc(d.id)">Parse document</span></td>
 			</tr>
 		</tbody>
 	</table>
