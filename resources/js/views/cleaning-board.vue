@@ -1,19 +1,15 @@
 <style>
-	#main-cleaning-board{
-		max-height:50vh !important;
-		overflow-y: scroll;
-	}
 </style>
 <template>
 	<div>
-		<div class="is-size-3">No of rows: {{ rowCount }}</div>
-		<div class="box" id="main-cleaning-board">
+		<div class="h1">No of rows: {{ rowCount }}</div>
+		<div class="container border border-primary" id="main-cleaning-board">
 			<div v-for="(d,i) in data" class="" @mouseover="setHover(i)" @mouseleave="unsetHover" :key="i + '-' + d">
 				<cleaning-row :d="d" :row_id="i" :showButtons='(current_hover === i)' :editData="edit_data === i"> </cleaning-row>
 			</div>
 		</div>
-		<div class="has-text-centered">
-			<button class="button is-success" @click="saveData">Save to Database</button>
+		<div class="d-flex justify-content-center mt-2">
+			<button class="btn btn-lg btn-success" @click="saveData">Save to Database</button>
 		</div>
 	</div>
 </template>
