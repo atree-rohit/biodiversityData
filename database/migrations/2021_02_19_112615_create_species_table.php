@@ -18,11 +18,11 @@ class CreateSpeciesTable extends Migration
             $table->string("name");
             $table->string("author")->nullable();
             $table->text("description")->nullable();
-            $table->unsignedBigInteger("taxon_id");
+            $table->unsignedBigInteger("taxa_id");
             $table->unsignedBigInteger("limbo_data_id");
             $table->timestamps();
 
-            $table->foreign('taxon_id')->references('id')->on('taxas')->onUpdate("cascade");
+            $table->foreign('taxa_id')->references('id')->on('taxas')->onUpdate("cascade");
             $table->foreign('limbo_data_id')->references('id')->on('limbo_data')->onUpdate("cascade");
         });
     }
