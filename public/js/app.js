@@ -4928,6 +4928,19 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -4939,10 +4952,12 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       cleaned_data: JSON.stringify(this.data),
-      original_data: [],
+      filteredData: [],
       current_hover: -1,
       edit_data: -1,
-      changeLog: []
+      changeLog: [],
+      selected_rows: [],
+      changelog_area_toggle: true
     };
   },
   created: function created() {
@@ -4991,31 +5006,120 @@ __webpack_require__.r(__webpack_exports__);
           console.log(rowAction);
       }
     });
+    this.filteredData = this.data;
   },
-  computed: {},
+  computed: {
+    toggleChangeLogButtonText: function toggleChangeLogButtonText() {
+      var button_text = "";
+      if (this.changelog_area_toggle) button_text = "Hide Change Log Area";else button_text = "Show Change Log Area";
+      return button_text;
+    },
+    delete_rows_btn: function delete_rows_btn() {
+      var showDeleteRowsButton = false;
+      if (this.selected_rows.length > 0) showDeleteRowsButton = true;
+      return showDeleteRowsButton;
+    },
+    merge_rows_btn: function merge_rows_btn() {
+      var showMergeRowsButton = false;
+      if (this.selected_rows.length > 1) showMergeRowsButton = true;
+      return showMergeRowsButton;
+    },
+    rows_with_0: function rows_with_0() {
+      var zero_rows = false;
+
+      for (var i = 0; i < this.filteredData.length; i++) {
+        if (this.filteredData[i].text.length == 0) {
+          zero_rows = true;
+          break;
+        }
+      }
+
+      return zero_rows;
+    }
+  },
   methods: {
+    toggleChangelogHeight: function toggleChangelogHeight() {
+      this.changelog_area_toggle = !this.changelog_area_toggle; // return(this.changelog_area_toggle)
+    },
+    deleteRows: function deleteRows() {
+      var _this2 = this;
+
+      var selected = this.selected_rows.sort();
+      selected.forEach(function (r) {
+        _this2.removeElement(r);
+      });
+      this.selected_rows = [];
+    },
+    mergeRows: function mergeRows() {
+      var selected = this.selected_rows.sort();
+      var min_id = this.find_row_no(selected[0]);
+      var op = [];
+
+      for (var i = 1; i < selected.length; i++) {
+        var element_id = this.find_row_no(selected[i]);
+        var element = this.filteredData.splice(element_id, 1);
+        op = this.filteredData;
+        op[min_id].text += " " + element[0].text;
+        this.logChange(selected[0], "merge " + selected[i]);
+      }
+
+      this.selected_rows = [];
+      this.filteredData = op;
+    },
+    remove0rows: function remove0rows() {
+      var _this3 = this;
+
+      var op = [];
+      this.filteredData.forEach(function (d) {
+        if (d.text.length == 0) _this3.removeElement(d.id);
+      });
+    },
     saveData: function saveData() {
       alert("saving data to database");
     },
-    mergeElements: function mergeElements(rowId, direction) {
-      if (direction == "up") {
-        var element = this.data.splice(rowId, 1);
-        this.data[rowId - 1] += " " + element;
-      } else if (direction == "down") {
-        var element = this.data.splice(rowId + 1, 1);
-        this.data[rowId] += " " + element;
+    find_row_no: function find_row_no(rowId) {
+      var match_id = -1;
+
+      for (var i = 0; i < this.filteredData.length; i++) {
+        if (this.filteredData[i].id == rowId) {
+          match_id = i;
+          break;
+        }
       }
 
+      return match_id;
+    },
+    mergeElements: function mergeElements(rowId, direction) {
+      var op = [];
+      var row_no = this.find_row_no(rowId); // console.log(rowId, row_no);
+
+      if (direction == "up") {
+        var element = this.filteredData.splice(row_no, 1);
+        op = this.filteredData;
+        op[row_no - 1].text += " " + element[0].text;
+      } else if (direction == "down") {
+        var element = this.filteredData.splice(row_no + 1, 1);
+        op = this.filteredData;
+        op[row_no].text += " " + element[0].text;
+      }
+
+      this.filteredData = op;
       this.logChange(rowId, "merge " + direction);
       this.unsetHover();
     },
     removeElement: function removeElement(rowId) {
-      this.data.splice(rowId, 1);
+      var op = [];
+      this.filteredData.forEach(function (d) {
+        if (d.id != rowId) {
+          op.push(d);
+        }
+      });
+      this.filteredData = op;
       this.logChange(rowId, "delete");
       this.unsetHover();
     },
-    setHover: function setHover(i) {
-      if (this.edit_data == -1) this.current_hover = i;
+    setHover: function setHover(rowId) {
+      if (this.edit_data == -1) this.current_hover = rowId;
     },
     unsetHover: function unsetHover() {
       this.current_hover = -1;
@@ -5122,23 +5226,38 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "cleaning-row",
-  props: ["d", "row_id", "showButtons", "editData"],
+  props: ["text", "id", "showButtons", "editData", "selected_rows"],
   data: function data() {
     return {
       text_color: "bg-light",
       row_color: "bg-light",
-      id: -1,
-      text: "" // editData
+      rowSelected: false,
+      selectedRow: "" // editData
 
     };
   },
-  created: function created() {
-    this.id = this.d.id;
-    this.text = this.d.text;
-  },
+  created: function created() {},
   watch: {
+    selected_rows: {
+      immediate: true,
+      handler: function handler(val, oldVal) {
+        if (val.includes(this.id)) {
+          this.rowSelected = true;
+        } else {
+          this.selectedRow = "";
+          this.rowSelected = false;
+        }
+      }
+    },
     showButtons: {
       immediate: true,
       handler: function handler(val, oldVal) {
@@ -5152,13 +5271,24 @@ __webpack_require__.r(__webpack_exports__);
   },
   computed: {
     length_color: function length_color() {
-      if (this.d.length == 0) return "danger";else if (this.d.length < 10) return "warning";else return "success";
+      if (this.text.length == 0) return "danger";else if (this.text.length < 10) return "warning";else return "success";
     },
     length_text_color: function length_text_color() {
       return "text-" + this.length_color;
     }
   },
   methods: {
+    toggle_select_row: function toggle_select_row() {
+      this.rowSelected = !this.rowSelected;
+
+      if (this.rowSelected) {
+        this.selectedRow = "bg-success text-light";
+        this.$parent.selected_rows.push(this.id); // this.$parent.$emit('rowSelected', this.id);
+      } else {
+        this.selectedRow = "";
+        this.$parent.selected_rows.splice(this.$parent.selected_rows.indexOf(this.id), 1);
+      }
+    },
     lineAction: function lineAction(verb) {
       this.$parent.$emit('clicked', this.id, verb, this.data);
     }
@@ -10237,7 +10367,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.main-div{\n\theight:40vh !important;\n\toverflow-y: scroll;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.main-div-expanded{\n\tmax-height:50% !important;\n\toverflow-y: scroll;\n}\n\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -10261,7 +10391,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.doc-row{\n\tmin-height: 40px !important;\n}\n.danger{\n\tbackground-color: rgba(255,50,50,.25);\n}\n.warning{\n\tbackground-color: rgba(255,255,200,.25);\n}\n.success{\n\tbackground-color: rgba(150,250,200,.25);\n}\n.highlight{\n\tbackground-color: rgba(250,250,100,.66);\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.doc-row{\n\tmin-height: 35px !important;\n}\n.danger{\n\tbackground-color: rgba(255,50,50,.25);\n}\n.warning{\n\tbackground-color: rgba(255,255,200,.25);\n}\n.success{\n\tbackground-color: rgba(150,250,200,.25);\n}\n.highlight{\n\tbackground-color: rgba(250,250,100,.66);\n}\n.number-col{\n\tmax-width:50px !important;\n\tborder: 1px solid #aaa;\n\t/*background-color: #ccc;*/\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -28457,67 +28587,135 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", [
-    _c("div", { staticClass: "h1" }, [
-      _vm._v("No of rows: " + _vm._s(_vm.data.length))
-    ]),
-    _vm._v(" "),
-    _c(
-      "div",
-      { staticClass: "border border-primary main-div" },
-      _vm._l(_vm.data, function(d) {
-        return _c(
-          "div",
-          {
-            key: d.id,
-            on: {
-              mouseover: function($event) {
-                return _vm.setHover(_vm.i)
-              },
-              mouseleave: _vm.unsetHover
-            }
-          },
-          [
-            _c("cleaning-row", {
-              attrs: {
-                d: d,
-                row_id: d.id,
-                showButtons: _vm.current_hover === d.id,
-                editData: _vm.edit_data === d.id
-              }
-            })
-          ],
-          1
-        )
-      }),
-      0
-    ),
-    _vm._v(" "),
-    _c("div", { staticClass: "d-flex justify-content-center mt-2" }, [
+  return _c(
+    "div",
+    {
+      staticClass: "container d-flex flex-column",
+      staticStyle: { "max-height": "90vh" }
+    },
+    [
+      _c("div", { staticClass: "row" }, [
+        _c("div", { staticClass: "col" }, [
+          _c("p", { staticClass: "h1" }, [
+            _vm._v(" No of rows: " + _vm._s(_vm.filteredData.length))
+          ])
+        ])
+      ]),
+      _vm._v(" "),
       _c(
-        "button",
-        { staticClass: "btn btn-lg btn-success", on: { click: _vm.saveData } },
-        [_vm._v("Save to Database")]
-      )
-    ]),
-    _vm._v(" "),
-    _c("div", { staticClass: "border border-success main-div" }, [
-      _c("table", { staticClass: "table" }, [
-        _vm._m(0),
+        "div",
+        { staticClass: "row border border-primary main-div-expanded" },
+        _vm._l(_vm.filteredData, function(d) {
+          return _c(
+            "div",
+            {
+              key: d.id,
+              on: {
+                mouseover: function($event) {
+                  return _vm.setHover(d.id)
+                },
+                mouseleave: _vm.unsetHover
+              }
+            },
+            [
+              _c("cleaning-row", {
+                attrs: {
+                  text: d.text,
+                  id: d.id,
+                  selected_rows: _vm.selected_rows,
+                  showButtons: _vm.current_hover === d.id,
+                  editData: _vm.edit_data === d.id
+                }
+              })
+            ],
+            1
+          )
+        }),
+        0
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "row  mt-2" }, [
+        _c("div", { staticClass: "d-flex justify-content-around" }, [
+          _vm.delete_rows_btn
+            ? _c(
+                "button",
+                {
+                  staticClass: "col-3 btn btn-danger",
+                  on: { click: _vm.deleteRows }
+                },
+                [_vm._v("Delete Selected Rows")]
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.merge_rows_btn
+            ? _c(
+                "button",
+                {
+                  staticClass: "col-3 btn btn-info",
+                  on: { click: _vm.mergeRows }
+                },
+                [_vm._v("Merge Selected Rows")]
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.rows_with_0
+            ? _c(
+                "button",
+                {
+                  staticClass: "col-3 btn btn-primary",
+                  on: { click: _vm.remove0rows }
+                },
+                [_vm._v("Remove all rows with no text")]
+              )
+            : _vm._e()
+        ]),
         _vm._v(" "),
-        _c(
-          "tbody",
-          _vm._l(_vm.changeLog, function(c, i) {
-            return _c("cleaning-changelog", {
-              key: i + "-" + c,
-              attrs: { changelog: c }
-            })
-          }),
-          1
-        )
-      ])
-    ])
-  ])
+        _c("div", { staticClass: "d-flex justify-content-around" }, [
+          _c(
+            "button",
+            {
+              staticClass: "btn btn-lg btn-success",
+              on: { click: _vm.saveData }
+            },
+            [_vm._v("Save to Database")]
+          ),
+          _vm._v(" "),
+          _c(
+            "button",
+            {
+              staticClass: "btn btn-warning",
+              domProps: { textContent: _vm._s(_vm.toggleChangeLogButtonText) },
+              on: { click: _vm.toggleChangelogHeight }
+            },
+            [_vm._v("Toggle")]
+          )
+        ])
+      ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "row border border-success main-div-expanded p-0" },
+        [
+          _vm.changelog_area_toggle
+            ? _c("table", { staticClass: "table table-sm" }, [
+                _vm._m(0),
+                _vm._v(" "),
+                _c(
+                  "tbody",
+                  _vm._l(_vm.changeLog, function(c, i) {
+                    return _c("cleaning-changelog", {
+                      key: i + "-" + c,
+                      attrs: { changelog: c }
+                    })
+                  }),
+                  1
+                )
+              ])
+            : _vm._e()
+        ]
+      )
+    ]
+  )
 }
 var staticRenderFns = [
   function() {
@@ -28584,167 +28782,164 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { staticClass: "row align-middle border m-0", class: _vm.row_color },
-    [
-      _c(
-        "div",
-        {
-          staticClass: "col-9 my-auto doc-row d-flex",
-          class: _vm.length_color
-        },
-        [
-          _c("span", { staticClass: "py-1 px-2 text-secondary" }, [
-            _vm._v(_vm._s(_vm.id) + ". ")
-          ]),
-          _vm._v(" "),
-          _vm.editData
-            ? _c("textarea", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.text,
-                    expression: "text"
-                  }
-                ],
-                staticClass: "form-control",
-                attrs: { rows: "2" },
-                domProps: { value: _vm.text },
-                on: {
-                  input: function($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.text = $event.target.value
-                  }
-                }
-              })
-            : _c("span", { staticClass: "p-1" }, [_vm._v(_vm._s(_vm.text))])
-        ]
-      ),
-      _vm._v(" "),
-      _c(
-        "div",
-        {
-          staticClass: "col-1 bg-light text-center",
-          class: _vm.length_text_color
-        },
-        [_vm._v(_vm._s(_vm.text.length))]
-      ),
-      _vm._v(" "),
-      _c("div", { staticClass: "col d-flex p-0" }, [
+  return _c("div", { staticClass: "row border p-0", class: _vm.row_color }, [
+    _c(
+      "div",
+      {
+        staticClass: "number-col",
+        class: _vm.selectedRow,
+        on: { click: _vm.toggle_select_row }
+      },
+      [
+        _c("span", { staticClass: "py-1 px-2 text-secondary" }, [
+          _vm._v(_vm._s(_vm.id) + ". ")
+        ])
+      ]
+    ),
+    _vm._v(" "),
+    _c(
+      "div",
+      { staticClass: "col-9 my-auto doc-row d-flex", class: _vm.length_color },
+      [
         _vm.editData
-          ? _c("div", { staticClass: "col" }, [
-              _c(
-                "div",
-                { staticClass: "btn-group d-flex justify-content-between" },
-                [
+          ? _c("textarea", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.text,
+                  expression: "text"
+                }
+              ],
+              staticClass: "form-control",
+              attrs: { rows: "2" },
+              domProps: { value: _vm.text },
+              on: {
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.text = $event.target.value
+                }
+              }
+            })
+          : _c("span", { staticClass: "p-1" }, [_vm._v(_vm._s(_vm.text))])
+      ]
+    ),
+    _vm._v(" "),
+    _c(
+      "div",
+      { staticClass: "number-col text-center", class: _vm.length_text_color },
+      [_vm._v(_vm._s(_vm.text.length))]
+    ),
+    _vm._v(" "),
+    _c("div", { staticClass: "col-2 d-flex p-0" }, [
+      _vm.editData
+        ? _c("div", { staticClass: "col" }, [
+            _c(
+              "div",
+              { staticClass: "btn-group d-flex justify-content-between" },
+              [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-success",
+                    on: {
+                      click: function($event) {
+                        return _vm.lineAction("edit_save")
+                      }
+                    }
+                  },
+                  [_c("i", { staticClass: "fa fa-floppy-o" }), _vm._v(" Save")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-danger",
+                    on: {
+                      click: function($event) {
+                        return _vm.lineAction("edit_cancel")
+                      }
+                    }
+                  },
+                  [_c("i", { staticClass: "fa fa-ban" }), _vm._v(" Cancel")]
+                )
+              ]
+            )
+          ])
+        : _c("div", { staticClass: "col" }, [
+            _vm.showButtons
+              ? _c("div", { staticClass: "btn-group d-flex align-middle" }, [
                   _c(
                     "button",
                     {
-                      staticClass: "btn btn-success",
+                      staticClass: "btn btn-sm mx-1 btn-success",
                       on: {
                         click: function($event) {
-                          return _vm.lineAction("edit_save")
+                          return _vm.lineAction("accept")
                         }
                       }
                     },
-                    [
-                      _c("i", { staticClass: "fa fa-floppy-o" }),
-                      _vm._v(" Save")
-                    ]
+                    [_c("i", { staticClass: "fa fa-check" })]
                   ),
                   _vm._v(" "),
                   _c(
                     "button",
                     {
-                      staticClass: "btn btn-danger",
+                      staticClass: "btn btn-sm mx-1 btn-info",
                       on: {
                         click: function($event) {
-                          return _vm.lineAction("edit_cancel")
+                          return _vm.lineAction("edit")
                         }
                       }
                     },
-                    [_c("i", { staticClass: "fa fa-ban" }), _vm._v(" Cancel")]
+                    [_c("i", { staticClass: "fa fa-pencil" })]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm mx-1 btn-danger",
+                      on: {
+                        click: function($event) {
+                          return _vm.lineAction("delete")
+                        }
+                      }
+                    },
+                    [_c("i", { staticClass: "fa fa-trash-o" })]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm mx-1 btn-primary",
+                      on: {
+                        click: function($event) {
+                          return _vm.lineAction("merge_up")
+                        }
+                      }
+                    },
+                    [_c("i", { staticClass: "fa fa-arrow-up" })]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-sm mx-1 btn-primary",
+                      on: {
+                        click: function($event) {
+                          return _vm.lineAction("merge_down")
+                        }
+                      }
+                    },
+                    [_c("i", { staticClass: "fa fa-arrow-down" })]
                   )
-                ]
-              )
-            ])
-          : _c("div", { staticClass: "col" }, [
-              _vm.showButtons
-                ? _c("div", { staticClass: "btn-group d-flex align-middle" }, [
-                    _c(
-                      "button",
-                      {
-                        staticClass: "btn px-1 mx-1 btn-success",
-                        on: {
-                          click: function($event) {
-                            return _vm.lineAction("accept")
-                          }
-                        }
-                      },
-                      [_c("i", { staticClass: "fa fa-check" })]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "button",
-                      {
-                        staticClass: "btn px-1 mx-1 btn-info",
-                        on: {
-                          click: function($event) {
-                            return _vm.lineAction("edit")
-                          }
-                        }
-                      },
-                      [_c("i", { staticClass: "fa fa-pencil" })]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "button",
-                      {
-                        staticClass: "btn px-1 mx-1 btn-danger",
-                        on: {
-                          click: function($event) {
-                            return _vm.lineAction("delete")
-                          }
-                        }
-                      },
-                      [_c("i", { staticClass: "fa fa-trash-o" })]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "button",
-                      {
-                        staticClass: "btn px-1 mx-1 btn-primary",
-                        on: {
-                          click: function($event) {
-                            return _vm.lineAction("merge_up")
-                          }
-                        }
-                      },
-                      [_c("i", { staticClass: "fa fa-arrow-up" })]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "button",
-                      {
-                        staticClass: "btn px-1 mx-1 btn-primary",
-                        on: {
-                          click: function($event) {
-                            return _vm.lineAction("merge_down")
-                          }
-                        }
-                      },
-                      [_c("i", { staticClass: "fa fa-arrow-down" })]
-                    )
-                  ])
-                : _vm._e()
-            ])
-      ])
-    ]
-  )
+                ])
+              : _vm._e()
+          ])
+    ])
+  ])
 }
 var staticRenderFns = []
 render._withStripped = true

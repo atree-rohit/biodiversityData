@@ -1,22 +1,36 @@
 <style>
-	.main-div{
-		height:40vh !important;
+	.main-div-expanded{
+		max-height:50% !important;
 		overflow-y: scroll;
 	}
+
 </style>
 <template>
-	<div>
-		<div class="h1">No of rows: {{ data.length }}</div>
-		<div class="border border-primary main-div">
-			<div v-for="d in data" class="" @mouseover="setHover(i)" @mouseleave="unsetHover" :key="d.id">
-				<cleaning-row :d="d" :row_id="d.id" :showButtons='(current_hover === d.id)' :editData="edit_data === d.id"> </cleaning-row>
+	<div class="container d-flex flex-column" style="max-height:90vh;">
+		<div class="row">
+			<div class="col">
+				<p class="h1"> No of rows: {{ filteredData.length }}</p>
 			</div>
 		</div>
-		<div class="d-flex justify-content-center mt-2">
-			<button class="btn btn-lg btn-success" @click="saveData">Save to Database</button>
+		<div class="row border border-primary main-div-expanded">
+			<div v-for="d in filteredData" class="" @mouseover="setHover(d.id)" @mouseleave="unsetHover" :key="d.id">
+				<cleaning-row :text="d.text" :id="d.id" :selected_rows="selected_rows" :showButtons='(current_hover === d.id)' :editData="edit_data === d.id"> </cleaning-row>
+			</div>
 		</div>
-		<div class="border border-success main-div" >
-			<table class="table">
+		<div class="row  mt-2">
+			<div class="d-flex justify-content-around">
+				<button class="col-3 btn btn-danger" v-if="delete_rows_btn" @click="deleteRows">Delete Selected Rows</button>
+				<button class="col-3 btn btn-info" v-if="merge_rows_btn" @click="mergeRows">Merge Selected Rows</button>
+				<button class="col-3 btn btn-primary" v-if="rows_with_0" @click="remove0rows">Remove all rows with no text</button>
+			</div>
+			<div class="d-flex justify-content-around">
+				<button class="btn btn-lg btn-success" @click="saveData">Save to Database</button>
+				<button class="btn btn-warning" @click="toggleChangelogHeight" v-text="toggleChangeLogButtonText">Toggle</button>
+			</div>
+		</div>
+
+		<div class="row border border-success main-div-expanded p-0">
+			<table class="table table-sm" v-if="changelog_area_toggle">
 				<thead>
 					<tr>
 						<th>ID</th>
@@ -27,7 +41,6 @@
 					<cleaning-changelog v-for="(c,i) in changeLog" :key="i + '-' + c" :changelog="c"> </cleaning-changelog>
 				</tbody>
 			</table>
-
 		</div>
 	</div>
 </template>
@@ -42,10 +55,12 @@ export default {
 	data() {
 		return{
 			cleaned_data: JSON.stringify(this.data),
-			original_data:[],
+			filteredData: [],
 			current_hover:-1,
 			edit_data: -1,
-			changeLog: []
+			changeLog: [],
+			selected_rows:[],
+			changelog_area_toggle: true
 		}
 	},
 	created(){
@@ -73,40 +88,129 @@ export default {
 				default: console.log(rowAction);
 			}
 		});
+		this.filteredData = this.data;
 	},
-	computed: {},
+	computed: {
+		toggleChangeLogButtonText: function(){
+			var button_text = "";
+			if(this.changelog_area_toggle)
+				button_text = "Hide Change Log Area";
+			else
+				button_text = "Show Change Log Area";
+			return button_text
+		},
+		delete_rows_btn: function(){
+			var showDeleteRowsButton = false;
+			if(this.selected_rows.length > 0)
+				showDeleteRowsButton = true;
+			return showDeleteRowsButton;
+		},
+		merge_rows_btn: function(){
+			var showMergeRowsButton = false;
+			if(this.selected_rows.length > 1)
+				showMergeRowsButton = true;
+			return showMergeRowsButton;
+		},
+		rows_with_0: function(){
+			var zero_rows = false;
+			for(var i = 0 ; i< this.filteredData.length ; i++){
+				if(this.filteredData[i].text.length == 0){
+					zero_rows = true;
+					break;
+				}
+			}
+			return zero_rows;
+		}
+	},
 	methods:{
+		toggleChangelogHeight(){
+			this.changelog_area_toggle = !this.changelog_area_toggle;
+			// return(this.changelog_area_toggle)
+		},
+		deleteRows(){
+			var selected = this.selected_rows.sort();
+			selected.forEach(r => {
+				this.removeElement(r);
+			});
+			this.selected_rows = [];
+
+		},
+		mergeRows(){
+			var selected = this.selected_rows.sort();
+			var min_id = this.find_row_no(selected[0]);
+			var op = [];
+			for(var i = 1 ; i<selected.length ; i++){
+				var element_id = this.find_row_no(selected[i])
+				var element = this.filteredData.splice(element_id,1);
+				op = this.filteredData;
+				op[min_id].text += " " + element[0].text;
+				this.logChange(selected[0], "merge " + selected[i]);
+			}
+			this.selected_rows = [];
+			this.filteredData = op;
+
+		},
+		remove0rows(){
+			var op = [];
+			this.filteredData.forEach(d => {
+				if(d.text.length == 0)
+					this.removeElement(d.id);
+			});
+		},
 		saveData(){
 			alert("saving data to database");
 		},
-		mergeElements(rowId, direction){
-			if(direction == "up"){
-				var element = this.data.splice(rowId,1);
-				this.data[rowId-1] += " " + element;
-			} else if(direction == "down"){
-				var element = this.data.splice(rowId+1,1);
-				this.data[rowId] += " " + element;
+		find_row_no(rowId){
+			var match_id = -1;
+			for(var i = 0 ; i < this.filteredData.length ; i++ ){
+				if(this.filteredData[i].id == rowId){
+					match_id = i;
+					break;
+				}
 			}
+			return match_id;
+		},
+		mergeElements(rowId, direction){
+			var op = [];
+			var row_no = this.find_row_no(rowId);
+			// console.log(rowId, row_no);
+			if(direction == "up"){
+				var element = this.filteredData.splice(row_no,1);
+				op = this.filteredData;
+				op[row_no-1].text += " " + element[0].text;
+			} else if(direction == "down"){
+				var element = this.filteredData.splice(row_no+1,1);
+				op = this.filteredData;
+				op[row_no].text += " " + element[0].text;
+			}
+			this.filteredData = op;
 			this.logChange(rowId, "merge " + direction);
 			this.unsetHover();
 		},
 		removeElement(rowId){
-			this.data.splice(rowId,1);
+			var op = [];
+			this.filteredData.forEach(d => {
+				if(d.id != rowId){
+					op.push(d)
+				}
+			});
+			this.filteredData = op;
+
 			this.logChange(rowId, "delete");
 			this.unsetHover();
 		},
-		setHover(i){
+		setHover(rowId){
 			if(this.edit_data == -1)
-				this.current_hover = i;
+				this.current_hover = rowId;
 		},
 		unsetHover(){
 			this.current_hover = -1;
 		},
 		logChange(id, type){
-			this.changeLog.push(
-				{"row_id": id,
-								"change_type": type}
-				);
+			this.changeLog.push({
+				"row_id": id,
+				"change_type": type
+			});
 		}
 
 	}
