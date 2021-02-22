@@ -75,18 +75,27 @@ class DocumentController extends Controller
         $per_page = 1000;
         $page = $_GET["page"] ?? 0;
         $page *= $per_page;
+        $contents = [];
 
         $file = $document->file;
 
         $raw_contents =  Pdf::getText(storage_path("app/".$file));
 
-        $contents = explode("\n", $raw_contents);
-        if ($page >= count($contents)) {
-            echo "<div style='text-align:center; font-size:2em;'><h1>Out of range, page number is too high</h1>";
+        $all_contents = explode("\n", $raw_contents);
+        if ($page >= count($all_contents)) {
+            echo "<div style='text-align:center; font-size:2em;'><h1>Out of range, page number is out of range</h1>";
             dd();
         }
 
-        $contents = array_slice($contents, $page, $per_page);
+        $contents_slice = array_slice($all_contents, $page, $per_page);
+        foreach($contents_slice as $key => $cs){
+            $contents[] = [
+                "id" => $key,
+                "text" => $cs
+            ];
+
+
+        }
         // dd($contents);
 
         return view("documents.show", compact("contents"));
