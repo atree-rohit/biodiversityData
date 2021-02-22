@@ -72,7 +72,7 @@ class DocumentController extends Controller
      */
     public function show(Document $document)
     {
-        $per_page = 1000;
+        $per_page = 250;
         $page = $_GET["page"] ?? 0;
         $page *= $per_page;
         $contents = [];
@@ -88,13 +88,11 @@ class DocumentController extends Controller
         }
 
         $contents_slice = array_slice($all_contents, $page, $per_page);
-        foreach($contents_slice as $key => $cs){
+        foreach ($contents_slice as $key => $cs) {
             $contents[] = [
                 "id" => $key,
                 "text" => $cs
             ];
-
-
         }
         // dd($contents);
 
