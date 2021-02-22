@@ -1,31 +1,51 @@
 <style>
+	.main-div{
+		height:40vh !important;
+		overflow-y: scroll;
+	}
 </style>
 <template>
 	<div>
-		<div class="h1">No of rows: {{ rowCount }}</div>
-		<div class="container border border-primary" id="main-cleaning-board">
-			<div v-for="(d,i) in data" class="" @mouseover="setHover(i)" @mouseleave="unsetHover" :key="i + '-' + d">
-				<cleaning-row :d="d" :row_id="i" :showButtons='(current_hover === i)' :editData="edit_data === i"> </cleaning-row>
+		<div class="h1">No of rows: {{ data.length }}</div>
+		<div class="border border-primary main-div">
+			<div v-for="d in data" class="" @mouseover="setHover(i)" @mouseleave="unsetHover" :key="d.id">
+				<cleaning-row :d="d" :row_id="d.id" :showButtons='(current_hover === d.id)' :editData="edit_data === d.id"> </cleaning-row>
 			</div>
 		</div>
 		<div class="d-flex justify-content-center mt-2">
 			<button class="btn btn-lg btn-success" @click="saveData">Save to Database</button>
 		</div>
+		<div class="border border-success main-div" >
+			<table class="table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Type</th>
+					</tr>
+				</thead>
+				<tbody>
+					<cleaning-changelog v-for="(c,i) in changeLog" :key="i + '-' + c" :changelog="c"> </cleaning-changelog>
+				</tbody>
+			</table>
+
+		</div>
 	</div>
 </template>
 
 <script>
-import CleaningRow from './cleaning-row'
+import CleaningRow from './cleaning-row';
+import CleaningChangelog from './cleaning-changelog';
 
 export default {
 	props: ["data"],
-	components: {CleaningRow},
+	components: {CleaningRow, CleaningChangelog},
 	data() {
 		return{
 			cleaned_data: JSON.stringify(this.data),
 			original_data:[],
 			current_hover:-1,
-			edit_data: -1
+			edit_data: -1,
+			changeLog: []
 		}
 	},
 	created(){
@@ -54,11 +74,7 @@ export default {
 			}
 		});
 	},
-	computed: {
-		rowCount: function (){
-			return this.data.length;
-		}
-	},
+	computed: {},
 	methods:{
 		saveData(){
 			alert("saving data to database");
@@ -71,10 +87,12 @@ export default {
 				var element = this.data.splice(rowId+1,1);
 				this.data[rowId] += " " + element;
 			}
+			this.logChange(rowId, "merge " + direction);
 			this.unsetHover();
 		},
 		removeElement(rowId){
 			this.data.splice(rowId,1);
+			this.logChange(rowId, "delete");
 			this.unsetHover();
 		},
 		setHover(i){
@@ -83,6 +101,12 @@ export default {
 		},
 		unsetHover(){
 			this.current_hover = -1;
+		},
+		logChange(id, type){
+			this.changeLog.push(
+				{"row_id": id,
+								"change_type": type}
+				);
 		}
 
 	}
