@@ -19,3 +19,4 @@ Route::get('/', function () {
 });
 
 Route::resource('documents', DocumentController::class);
+Route::post('/documents/limbo_data', [DocumentController::class, "limbo_data"]);

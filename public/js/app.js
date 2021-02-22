@@ -4941,6 +4941,9 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -5075,7 +5078,35 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     saveData: function saveData() {
-      alert("saving data to database");
+      var data = JSON.stringify(this.filteredData);
+      var changelog = JSON.stringify(this.changeLog);
+      var csrf = document.head.querySelector("[name=csrf-token]").content;
+      var doc_id = window.location.href.split("/")[4];
+      console.log(doc_id);
+      var page_no = new URL(location.href).searchParams.get('page');
+
+      if (page_no == null) {
+        page_no = 0;
+      }
+
+      var formData = new FormData();
+      formData.append("document_id", doc_id);
+      formData.append("page_no", page_no);
+      formData.append("data", data);
+      formData.append("changelog", changelog);
+      formData.append("_token", csrf);
+      console.log(formData);
+      console.log(csrf);
+      fetch("/documents/limbo_data", {
+        method: 'POST',
+        body: formData
+      }).then(function () {
+        return console.log('success');
+      }); // var xhttp = new XMLHttpRequest();
+      // xhttp.open("POST", "/documents/limbo_data" , true);
+      // xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      // xhttp.setRequestHeader("X-CSRF-TOKEN", document.head.querySelector("[name=csrf-token]").content );
+      // xhttp.send(params);
     },
     find_row_no: function find_row_no(rowId) {
       var match_id = -1;
@@ -5126,8 +5157,8 @@ __webpack_require__.r(__webpack_exports__);
     },
     logChange: function logChange(id, type) {
       this.changeLog.push({
-        "row_id": id,
-        "change_type": type
+        "id": id,
+        "type": type
       });
     }
   }
@@ -28687,7 +28718,7 @@ var render = function() {
               domProps: { textContent: _vm._s(_vm.toggleChangeLogButtonText) },
               on: { click: _vm.toggleChangelogHeight }
             },
-            [_vm._v("Toggle")]
+            [_vm._v("Toggle Change Log Area")]
           )
         ])
       ]),

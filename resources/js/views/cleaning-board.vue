@@ -24,8 +24,11 @@
 				<button class="col-3 btn btn-primary" v-if="rows_with_0" @click="remove0rows">Remove all rows with no text</button>
 			</div>
 			<div class="d-flex justify-content-around">
-				<button class="btn btn-lg btn-success" @click="saveData">Save to Database</button>
-				<button class="btn btn-warning" @click="toggleChangelogHeight" v-text="toggleChangeLogButtonText">Toggle</button>
+
+					<button class="btn btn-lg btn-success" @click="saveData">Save to Database</button>
+				<!-- <form method="POST" action="./documents/limbo_data" enctype="multipart/form-data">
+				</form> -->
+				<button class="btn btn-warning" @click="toggleChangelogHeight" v-text="toggleChangeLogButtonText">Toggle Change Log Area</button>
 			</div>
 		</div>
 
@@ -158,7 +161,35 @@ export default {
 			});
 		},
 		saveData(){
-			alert("saving data to database");
+			const data = JSON.stringify(this.filteredData);
+			const changelog = JSON.stringify(this.changeLog);
+			const csrf = document.head.querySelector("[name=csrf-token]").content
+
+			var doc_id = window.location.href.split("/")[4];
+			console.log(doc_id);
+
+			var page_no = new URL(location.href).searchParams.get('page');
+			if(page_no == null){
+				page_no = 0;
+			}
+
+			 let formData = new FormData();
+			 formData.append("document_id", doc_id);
+			 formData.append("page_no", page_no);
+			 formData.append("data", data);
+			 formData.append("changelog", changelog);
+			 formData.append("_token", csrf);
+			 console.log(formData);
+			 console.log(csrf);
+			 fetch("/documents/limbo_data", {
+			 	method: 'POST',
+			 	body: formData
+			 }).then(() => console.log('success'));
+			// var xhttp = new XMLHttpRequest();
+			// xhttp.open("POST", "/documents/limbo_data" , true);
+			// xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			// xhttp.setRequestHeader("X-CSRF-TOKEN", document.head.querySelector("[name=csrf-token]").content );
+			// xhttp.send(params);
 		},
 		find_row_no(rowId){
 			var match_id = -1;
@@ -208,8 +239,8 @@ export default {
 		},
 		logChange(id, type){
 			this.changeLog.push({
-				"row_id": id,
-				"change_type": type
+				"id": id,
+				"type": type
 			});
 		}
 

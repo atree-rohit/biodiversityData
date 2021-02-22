@@ -46,6 +46,7 @@ class DocumentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
     public function store(Request $request)
     {
         $this->validate($request, [
@@ -63,6 +64,12 @@ class DocumentController extends Controller
         $document->save();
         return redirect()->back()->with('success', "PDF added successfully");
     }
+
+    public function limbo_data(Request $request)
+    {
+        dd($request->all());
+    }
+
 
     /**
      * Display the specified resource.
