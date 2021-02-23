@@ -8,9 +8,28 @@
 </style>
 <template>
 	<div class="container d-flex flex-column" style="max-height:95vh;">
+		<div class="row bg-success" v-if="displayMessage">
+			<div class="col-11 text-center p-3">
+				<span class="h3 text-light">
+					{{ messageText }}
+				</span>
+			</div>
+			<div class="col text-end p-1">
+				<button type="button" class="close btn btn-sm btn-outline-light" @click="displayMessage = false">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+		</div>
 		<div class="row">
-			<div class="col">
-				<p class="h1"> No of rows: {{ filteredData.length }}</p>
+			<div class="col d-flex justify-content-around">
+				<div class="h5 p-2 border border-success rounded"> Page No: {{ page_no }}</div>
+				<div class="h5 p-2 border border-success rounded"> No of rows: {{ filteredData.length }}</div>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<div class="col d-flex justify-content-center">
+				<button class="btn btn-outline-dark mx-3" v-if="page_no > 0" @click="gotoPage('prev')">Previous Page</button>
+				<button class="btn btn-outline-dark mx-3" @click="gotoPage('next')">Next Page</button>
 			</div>
 		</div>
 		<div class="row border border-primary main-div-expanded">
@@ -22,7 +41,7 @@
 			<div class="d-flex justify-content-around">
 				<button class="col-3 btn btn-danger" v-if="delete_rows_btn" @click="deleteRows">Delete Selected Rows</button>
 				<button class="col-3 btn btn-info" v-if="merge_rows_btn" @click="mergeRows">Merge Selected Rows</button>
-				<button class="col-3 btn btn-primary" v-if="rows_with_0" @click="remove0rows">Remove all rows with no text</button>
+				<button class="col-3 btn btn-primary" v-if="rows_with_0" @click="remove0rows">Remove all rows without text</button>
 			</div>
 			<div class="d-flex justify-content-around">
 
@@ -35,9 +54,9 @@
 
 		<div class="row main-div-expanded" v-if="changelog_area_toggle">
 			<div class="d-flex flex-row flex-wrap bd-highlight">
-				<cleaning-changelog v-for="(c,i) in changeLog" :key="i" :changelog="c" > </cleaning-changelog>				
+				<cleaning-changelog v-for="(c,i) in changeLog" :key="i" :changelog="c" > </cleaning-changelog>
 			</div>
-			
+
 		</div>
 	</div>
 </template>
@@ -53,11 +72,16 @@ export default {
 		return{
 			cleaned_data: JSON.stringify(this.data),
 			filteredData: [],
+			base_url:"",
+			doc_id:-1,
+			page_no: -1,
 			current_hover:-1,
 			edit_data: -1,
 			changeLog: [],
 			selected_rows:[],
-			changelog_area_toggle: false
+			changelog_area_toggle: false,
+			displayMessage:false,
+			messageText: "",
 		}
 	},
 	created(){
@@ -80,6 +104,15 @@ export default {
 			}
 		});
 		this.filteredData = this.data;
+		var url_array = window.location.href.split("/");
+		this.doc_id = url_array.pop();
+		this.base_url = url_array.join("/");
+		this.page_no = new URL(location.href).searchParams.get('page');
+		if(this.page_no == null){
+			this.page_no = 0;
+		} else {
+			this.doc_id = this.doc_id.split("?")[0]
+		}
 	},
 	computed: {
 		toggleChangeLogButtonText: function(){
@@ -114,6 +147,15 @@ export default {
 		}
 	},
 	methods:{
+		gotoPage(direction){
+			var page_no = parseInt(this.page_no);
+
+			if(direction == "prev")
+				page_no -= 1;
+			else
+				page_no += 1;
+			window.location.href = this.base_url + "/" + this.doc_id + "?page="+page_no;
+		},
 		toggleChangelogHeight(){
 			this.changelog_area_toggle = !this.changelog_area_toggle;
 			// return(this.changelog_area_toggle)
@@ -152,32 +194,26 @@ export default {
 			const data = JSON.stringify(this.filteredData);
 			const changelog = JSON.stringify(this.changeLog);
 			const csrf = document.head.querySelector("[name=csrf-token]").content
-			var current_url = window.location.href
-
-			var url_array = current_url.split("/");
-			var doc_id = url_array.pop();
-			var base_url = url_array.join("/");
-
-			var page_no = new URL(location.href).searchParams.get('page');
-			if(page_no == null){
-				page_no = 0;
-			}
 
 			 let formData = new FormData();
-			 formData.append("document_id", doc_id);
-			 formData.append("page_no", page_no);
+			 formData.append("document_id", this.doc_id);
+			 formData.append("page_no", this.page_no);
 			 formData.append("data", data);
 			 formData.append("changelog", changelog);
 			 formData.append("_token", csrf);
-			 
-			 fetch("/documents/limbo_data", {
+
+			 fetch("/limbo_data", {
 			 	method: 'POST',
 			 	body: formData
-			 }).then(() => {
-			 	console.log('success');
-			 	window.location.href = base_url;
+			 })
+			 .then(response => response.json())
+			 .then(data => {
+
+			 	this.displayMessage = true;
+			 	this.messageText = data;
+			 	// window.location.href = this.base_url;
 			 });
-			
+
 		},
 		find_row_no(rowId){
 			var match_id = -1;

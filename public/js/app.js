@@ -4938,6 +4938,25 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -4950,11 +4969,16 @@ __webpack_require__.r(__webpack_exports__);
     return {
       cleaned_data: JSON.stringify(this.data),
       filteredData: [],
+      base_url: "",
+      doc_id: -1,
+      page_no: -1,
       current_hover: -1,
       edit_data: -1,
       changeLog: [],
       selected_rows: [],
-      changelog_area_toggle: false
+      changelog_area_toggle: false,
+      displayMessage: false,
+      messageText: ""
     };
   },
   created: function created() {
@@ -4997,6 +5021,16 @@ __webpack_require__.r(__webpack_exports__);
       }
     });
     this.filteredData = this.data;
+    var url_array = window.location.href.split("/");
+    this.doc_id = url_array.pop();
+    this.base_url = url_array.join("/");
+    this.page_no = new URL(location.href).searchParams.get('page');
+
+    if (this.page_no == null) {
+      this.page_no = 0;
+    } else {
+      this.doc_id = this.doc_id.split("?")[0];
+    }
   },
   computed: {
     toggleChangeLogButtonText: function toggleChangeLogButtonText() {
@@ -5028,6 +5062,11 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   methods: {
+    gotoPage: function gotoPage(direction) {
+      var page_no = parseInt(this.page_no);
+      if (direction == "prev") page_no -= 1;else page_no += 1;
+      window.location.href = this.base_url + "/" + this.doc_id + "?page=" + page_no;
+    },
     toggleChangelogHeight: function toggleChangelogHeight() {
       this.changelog_area_toggle = !this.changelog_area_toggle; // return(this.changelog_area_toggle)
     },
@@ -5065,31 +5104,25 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     saveData: function saveData() {
+      var _this4 = this;
+
       var data = JSON.stringify(this.filteredData);
       var changelog = JSON.stringify(this.changeLog);
       var csrf = document.head.querySelector("[name=csrf-token]").content;
-      var current_url = window.location.href;
-      var url_array = current_url.split("/");
-      var doc_id = url_array.pop();
-      var base_url = url_array.join("/");
-      var page_no = new URL(location.href).searchParams.get('page');
-
-      if (page_no == null) {
-        page_no = 0;
-      }
-
       var formData = new FormData();
-      formData.append("document_id", doc_id);
-      formData.append("page_no", page_no);
+      formData.append("document_id", this.doc_id);
+      formData.append("page_no", this.page_no);
       formData.append("data", data);
       formData.append("changelog", changelog);
       formData.append("_token", csrf);
-      fetch("/documents/limbo_data", {
+      fetch("/limbo_data", {
         method: 'POST',
         body: formData
-      }).then(function () {
-        console.log('success');
-        window.location.href = base_url;
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        _this4.displayMessage = true;
+        _this4.messageText = data; // window.location.href = this.base_url;
       });
     },
     find_row_no: function find_row_no(rowId) {
@@ -28710,11 +28743,77 @@ var render = function() {
       staticStyle: { "max-height": "95vh" }
     },
     [
+      _vm.displayMessage
+        ? _c("div", { staticClass: "row bg-success" }, [
+            _c("div", { staticClass: "col-11 text-center p-3" }, [
+              _c("span", { staticClass: "h3 text-light" }, [
+                _vm._v("\n\t\t\t\t" + _vm._s(_vm.messageText) + "\n\t\t\t")
+              ])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "col text-end p-1" }, [
+              _c(
+                "button",
+                {
+                  staticClass: "close btn btn-sm btn-outline-light",
+                  attrs: { type: "button" },
+                  on: {
+                    click: function($event) {
+                      _vm.displayMessage = false
+                    }
+                  }
+                },
+                [
+                  _c("span", { attrs: { "aria-hidden": "true" } }, [
+                    _vm._v("×")
+                  ])
+                ]
+              )
+            ])
+          ])
+        : _vm._e(),
+      _vm._v(" "),
       _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col" }, [
-          _c("p", { staticClass: "h1" }, [
+        _c("div", { staticClass: "col d-flex justify-content-around" }, [
+          _c("div", { staticClass: "h5 p-2 border border-success rounded" }, [
+            _vm._v(" Page No: " + _vm._s(_vm.page_no))
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "h5 p-2 border border-success rounded" }, [
             _vm._v(" No of rows: " + _vm._s(_vm.filteredData.length))
           ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "row mb-3" }, [
+        _c("div", { staticClass: "col d-flex justify-content-center" }, [
+          _vm.page_no > 0
+            ? _c(
+                "button",
+                {
+                  staticClass: "btn btn-outline-dark mx-3",
+                  on: {
+                    click: function($event) {
+                      return _vm.gotoPage("prev")
+                    }
+                  }
+                },
+                [_vm._v("Previous Page")]
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _c(
+            "button",
+            {
+              staticClass: "btn btn-outline-dark mx-3",
+              on: {
+                click: function($event) {
+                  return _vm.gotoPage("next")
+                }
+              }
+            },
+            [_vm._v("Next Page")]
+          )
         ])
       ]),
       _vm._v(" "),
@@ -28781,7 +28880,7 @@ var render = function() {
                   staticClass: "col-3 btn btn-primary",
                   on: { click: _vm.remove0rows }
                 },
-                [_vm._v("Remove all rows with no text")]
+                [_vm._v("Remove all rows without text")]
               )
             : _vm._e()
         ]),
