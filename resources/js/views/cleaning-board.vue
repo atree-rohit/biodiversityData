@@ -28,20 +28,25 @@
 		</div>
 		<div class="row mb-3">
 			<div class="col d-flex justify-content-center">
-				<button class="btn btn-outline-dark mx-3" v-if="page_no > 0" @click="gotoPage('prev')">Previous Page</button>
-				<button class="btn btn-outline-dark mx-3" @click="gotoPage('next')">Next Page</button>
+				<button class="btn btn-outline-dark mx-3" v-if="page_no > 0" @click="gotoPage('prev')">&lt; &lt; Previous Page</button>
+				<button class="btn btn-outline-dark mx-3" @click="gotoPage('next')">Next Page &gt; &gt;</button>
 			</div>
 		</div>
 		<div class="row border border-primary main-div-expanded">
-			<div v-for="d in filteredData" class="" @mouseover="setHover(d.id)" @mouseleave="unsetHover" :key="d.id">
+			<div v-for="d in filteredData" @mouseover="setHover(d.id)" @mouseleave="unsetHover" :key="d.id">
 				<cleaning-row :text="d.text" :id="d.id" :selected_rows="selected_rows" :showButtons='(current_hover === d.id)' :editData="edit_data === d.id"> </cleaning-row>
 			</div>
 		</div>
 		<div class="row  mt-2">
+			<div v-if="selected_rows.length" class="text-center">
+				{{selected_rows.length}} rows selected
+
+			</div>
 			<div class="d-flex justify-content-around">
-				<button class="col-3 btn btn-danger" v-if="delete_rows_btn" @click="deleteRows">Delete Selected Rows</button>
-				<button class="col-3 btn btn-info" v-if="merge_rows_btn" @click="mergeRows">Merge Selected Rows</button>
 				<button class="col-3 btn btn-primary" v-if="rows_with_0" @click="remove0rows">Remove all rows without text</button>
+				<button class="col-3 btn btn-info" v-if="merge_rows_btn" @click="mergeRows">Merge Selected Rows</button>
+				<button class="col-3 btn btn-danger" v-if="delete_rows_btn" @click="deleteRows">Delete Selected Rows</button>
+				<button class="col-3 btn btn-success" v-if="selected_rows.length" @click="selected_rows = []">Unselect All</button>
 			</div>
 			<div class="d-flex justify-content-around">
 
@@ -75,6 +80,7 @@ export default {
 			base_url:"",
 			doc_id:-1,
 			page_no: -1,
+			per_page: -1,
 			current_hover:-1,
 			edit_data: -1,
 			changeLog: [],
@@ -112,6 +118,10 @@ export default {
 			this.page_no = 0;
 		} else {
 			this.doc_id = this.doc_id.split("?")[0]
+		}
+		this.per_page = new URL(location.href).searchParams.get('per_page');
+		if(this.per_page == null){
+			this.per_page = 250;
 		}
 	},
 	computed: {
@@ -198,6 +208,7 @@ export default {
 			 let formData = new FormData();
 			 formData.append("document_id", this.doc_id);
 			 formData.append("page_no", this.page_no);
+			 formData.append("per_page", this.per_page);
 			 formData.append("data", data);
 			 formData.append("changelog", changelog);
 			 formData.append("_token", csrf);
@@ -233,7 +244,7 @@ export default {
 		mergeElements(rowId, direction){
 			var op = [];
 			var row_no = this.find_row_no(rowId);
-			// console.log(rowId, row_no);
+
 			if(direction == "up"){
 				var element = this.filteredData.splice(row_no,1);
 				op = this.filteredData;
@@ -244,6 +255,7 @@ export default {
 				op[row_no].text += " " + element[0].text;
 			}
 			this.filteredData = op;
+
 			this.logChange(rowId, "merge", direction);
 			this.unsetHover();
 		},
