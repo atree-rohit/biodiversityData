@@ -29,7 +29,7 @@
 						<h5 class="modal-title">Add a PDF file</h5>
 						<button type="button" class="btn-close cancelModal" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
-					<form method="POST" action="./documents" enctype="multipart/form-data">
+					<form method="POST" action="/documents" enctype="multipart/form-data">
 						@csrf
 						<div class="modal-body">
 							<div class="mb-3">
