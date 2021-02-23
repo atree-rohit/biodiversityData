@@ -16,18 +16,16 @@ class DocumentController extends Controller
      */
     public function index()
     {
-        $documents = Document::all();
+        $documents = Document::with("limbo_data")->get();
         $fields = [
             ['id', 'ID'],
             ['filename', 'Filename'],
             ['description', 'Description'],
-            ['parsed', 'Parsed?']
+            ['parsed', 'Parsed'],
+            ['limbo_data', 'Parsed Data']
         ];
-        $headers = ['ID', 'Filename', 'Description', 'Parsed?'];
 
-        // $fields = [1,2,3];
-
-        return view("documents.index", compact("documents", "fields", "headers"));
+        return view("documents.index", compact("documents", "fields"));
     }
 
     /**
@@ -73,7 +71,7 @@ class DocumentController extends Controller
      */
     public function show(Document $document)
     {
-        $per_page = 250;
+        $per_page = $_GET["per_page"] ?? 250;
         $page = $_GET["page"] ?? 0;
         $page *= $per_page;
         $contents = [];
