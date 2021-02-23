@@ -76,7 +76,7 @@ class LimboDataController extends Controller
 
     public function show(LimboData $limboData)
     {
-        //
+        dd($limboData);
     }
 
     /**

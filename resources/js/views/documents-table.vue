@@ -28,7 +28,7 @@ export default {
 	props: ["fields", "data"],
 	data() {
 		return {
-		url:""
+			url:""
 		}
 	},
 	created(){
