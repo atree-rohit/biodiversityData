@@ -70,6 +70,12 @@ export default {
 		this.currentText = this.text;
 	},
 	watch:{
+		text:{
+			immediate:true,
+			handler(val, oldVal){
+				this.currentText = this.text;
+			}
+		},
 		selected_rows:{
 			immediate:true,
 			handler(val, oldVal){
@@ -95,9 +101,10 @@ export default {
 	},
 	computed: {
 		length_color: function (){
-			if(this.text.length == 0)
+
+			if(this.currentText.length == 0)
 				return "danger";
-			else if(this.text.length < 10)
+			else if(this.currentText.length < 10)
 				return "warning";
 			else
 				return "success";
@@ -119,7 +126,7 @@ export default {
 			}
 		},
 		lineAction(verb){
-			this.$parent.$emit('clicked', this.id, verb, this.data);
+			this.$parent.$emit('clicked', this.id, verb, this.currentText);
 		}
 	}
 
