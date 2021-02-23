@@ -26,10 +26,10 @@
 			<span class="py-1 px-2 text-secondary">{{ id }}. </span>
 		</div>
 		<div class="col-9 my-auto doc-row d-flex" :class="length_color">
-			<textarea class="form-control" v-if="editData" rows="2" v-model="text"></textarea>
-			<span v-else class="p-1">{{ text }}</span>
+			<textarea class="form-control" v-if="editData" rows="2" v-model="currentText"></textarea>
+			<span v-else class="p-1">{{ currentText }}</span>
 		</div>
-		<div class="number-col text-center" :class="length_text_color">{{ text.length }}</div>
+		<div class="number-col text-center" :class="length_text_color">{{ currentText.length }}</div>
 		<div class="col-2 d-flex p-0">
 			<div class="col" v-if="editData">
 				<div class="btn-group d-flex justify-content-between" >
@@ -58,6 +58,7 @@ export default {
 	props: ["text","id", "showButtons", "editData", "selected_rows"],
 	data() {
 		return{
+			currentText:"",
 			text_color: "bg-light",
 			row_color: "bg-light",
 			rowSelected: false,
@@ -66,6 +67,7 @@ export default {
 		}
 	},
 	created(){
+		this.currentText = this.text;
 	},
 	watch:{
 		selected_rows:{

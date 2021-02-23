@@ -1,12 +1,13 @@
 <style>
 	.main-div-expanded{
-		max-height:50% !important;
+		max-height:90vh !important;
+		min-height:30vh !important;
 		overflow-y: scroll;
 	}
 
 </style>
 <template>
-	<div class="container d-flex flex-column" style="max-height:90vh;">
+	<div class="container d-flex flex-column" style="max-height:95vh;">
 		<div class="row">
 			<div class="col">
 				<p class="h1"> No of rows: {{ filteredData.length }}</p>
@@ -28,22 +29,15 @@
 					<button class="btn btn-lg btn-success" @click="saveData">Save to Database</button>
 				<!-- <form method="POST" action="./documents/limbo_data" enctype="multipart/form-data">
 				</form> -->
-				<button class="btn btn-warning" @click="toggleChangelogHeight" v-text="toggleChangeLogButtonText">Toggle Change Log Area</button>
+				<button class="btn btn-warning" @click="toggleChangelogHeight" v-text="toggleChangeLogButtonText"></button>
 			</div>
 		</div>
 
-		<div class="row border border-success main-div-expanded p-0">
-			<table class="table table-sm" v-if="changelog_area_toggle">
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Type</th>
-					</tr>
-				</thead>
-				<tbody>
-					<cleaning-changelog v-for="(c,i) in changeLog" :key="i + '-' + c" :changelog="c"> </cleaning-changelog>
-				</tbody>
-			</table>
+		<div class="row main-div-expanded" v-if="changelog_area_toggle">
+			<div class="d-flex flex-row flex-wrap bd-highlight">
+				<cleaning-changelog v-for="(c,i) in changeLog" :key="i" :changelog="c" > </cleaning-changelog>				
+			</div>
+			
 		</div>
 	</div>
 </template>
@@ -63,7 +57,7 @@ export default {
 			edit_data: -1,
 			changeLog: [],
 			selected_rows:[],
-			changelog_area_toggle: true
+			changelog_area_toggle: false
 		}
 	},
 	created(){
@@ -71,11 +65,7 @@ export default {
 			switch(rowAction){
 				case("accept"): console.log("Accept");
 								break;
-				case("edit"): if(this.edit_data == rowId){
-								this.edit_data = -1
-							  } else {
-								this.edit_data = rowId;
-							  }
+				case("edit"): this.edit_data = rowId;
 							  break;
 				case("delete"): this.removeElement(rowId);
 								break;
@@ -83,9 +73,7 @@ export default {
 								break;
 				case("merge_down"): this.mergeElements(rowId, "down");
 								break;
-				case("edit_save"): this.data[rowId] = editedData;
-								this.edit_data = -1;
-								break;
+				case("edit_save"): this.saveEditData(rowId, editedData);
 				case("edit_cancel"): this.edit_data = -1;
 								break;
 				default: console.log(rowAction);
@@ -97,9 +85,9 @@ export default {
 		toggleChangeLogButtonText: function(){
 			var button_text = "";
 			if(this.changelog_area_toggle)
-				button_text = "Hide Change Log Area";
+				button_text = "Hide Change Log";
 			else
-				button_text = "Show Change Log Area";
+				button_text = "Show Change Log";
 			return button_text
 		},
 		delete_rows_btn: function(){
@@ -147,7 +135,7 @@ export default {
 				var element = this.filteredData.splice(element_id,1);
 				op = this.filteredData;
 				op[min_id].text += " " + element[0].text;
-				this.logChange(selected[0], "merge " + selected[i]);
+				this.logChange(selected[0], "merge", selected[i]);
 			}
 			this.selected_rows = [];
 			this.filteredData = op;
@@ -164,9 +152,11 @@ export default {
 			const data = JSON.stringify(this.filteredData);
 			const changelog = JSON.stringify(this.changeLog);
 			const csrf = document.head.querySelector("[name=csrf-token]").content
+			var current_url = window.location.href
 
-			var doc_id = window.location.href.split("/")[4];
-			console.log(doc_id);
+			var url_array = current_url.split("/");
+			var doc_id = url_array.pop();
+			var base_url = url_array.join("/");
 
 			var page_no = new URL(location.href).searchParams.get('page');
 			if(page_no == null){
@@ -179,17 +169,15 @@ export default {
 			 formData.append("data", data);
 			 formData.append("changelog", changelog);
 			 formData.append("_token", csrf);
-			 console.log(formData);
-			 console.log(csrf);
+			 
 			 fetch("/documents/limbo_data", {
 			 	method: 'POST',
 			 	body: formData
-			 }).then(() => console.log('success'));
-			// var xhttp = new XMLHttpRequest();
-			// xhttp.open("POST", "/documents/limbo_data" , true);
-			// xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-			// xhttp.setRequestHeader("X-CSRF-TOKEN", document.head.querySelector("[name=csrf-token]").content );
-			// xhttp.send(params);
+			 }).then(() => {
+			 	console.log('success');
+			 	window.location.href = base_url;
+			 });
+			
 		},
 		find_row_no(rowId){
 			var match_id = -1;
@@ -200,6 +188,11 @@ export default {
 				}
 			}
 			return match_id;
+		},
+		saveEditData(rowId, updatedData){
+			var row_no = this.find_row_no(rowId);
+			this.filteredData[row_no].text = updatedData;
+			this.logChange(rowId, "edit ", updatedData);
 		},
 		mergeElements(rowId, direction){
 			var op = [];
@@ -215,7 +208,7 @@ export default {
 				op[row_no].text += " " + element[0].text;
 			}
 			this.filteredData = op;
-			this.logChange(rowId, "merge " + direction);
+			this.logChange(rowId, "merge", direction);
 			this.unsetHover();
 		},
 		removeElement(rowId){
@@ -227,7 +220,7 @@ export default {
 			});
 			this.filteredData = op;
 
-			this.logChange(rowId, "delete");
+			this.logChange(rowId, "delete", null);
 			this.unsetHover();
 		},
 		setHover(rowId){
@@ -237,10 +230,11 @@ export default {
 		unsetHover(){
 			this.current_hover = -1;
 		},
-		logChange(id, type){
+		logChange(id, type, data){
 			this.changeLog.push({
 				"id": id,
-				"type": type
+				"type": type,
+				"data": data
 			});
 		}
 
