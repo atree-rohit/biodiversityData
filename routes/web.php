@@ -20,4 +20,5 @@ Route::get('/', function () {
 });
 
 Route::resource('documents', DocumentController::class);
+Route::get('limbo_data/parsed/{id}', [LimboDataController::class, "parsed_data"]);
 Route::resource('limbo_data', LimboDataController::class);
