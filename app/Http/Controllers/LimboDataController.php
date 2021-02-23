@@ -35,7 +35,10 @@ class LimboDataController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // dd($request->all());
+        $x = $request->all();
+        // $y = json_encode($x);
+        return response()->json("Data added successfully!!");
     }
 
     /**

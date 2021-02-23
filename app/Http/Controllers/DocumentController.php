@@ -65,12 +65,6 @@ class DocumentController extends Controller
         return redirect()->back()->with('success', "PDF added successfully");
     }
 
-    public function limbo_data(Request $request)
-    {
-        dd($request->all());
-    }
-
-
     /**
      * Display the specified resource.
      *
